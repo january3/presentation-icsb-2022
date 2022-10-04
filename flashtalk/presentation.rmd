@@ -1,0 +1,251 @@
+---
+title: "Blah blah"
+author: "January Weiner"
+date: "`r Sys.Date()`"
+outputoff: html_document
+output:
+  xaringan::moon_reader:
+    self-contained: true
+    css: ["default", "files/cubi-fonts.css", "files/style.css" ]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      countIncrementalSlides: false
+      ratio: "16:9"
+toc: no
+bibliography: bibliography.bib
+nocite: "@weiner2022venn"
+---
+
+```{r,echo=FALSE}
+## Set default options for the knitr RMD processing
+knitr::opts_chunk$set(echo=FALSE,warning=FALSE,message=FALSE,fig.width=5,fig.height=5,cache=TRUE,autodep=TRUE, results="hide")
+```
+
+```{r libraries,cache=FALSE}
+library(tidyverse)
+library(limma)
+library(GEOquery)
+library(DESeq2)
+## install bioshmods from github.com/bihealth/bioshmods
+library(bioshmods)
+library(tmod)
+library(cowplot)
+library(stringr)
+library(ggvenn)
+library(ggplot2)
+library(ggpval)
+#library(eulerr)
+library(Biobase)
+library(pander)
+library(org.Hs.eg.db)
+library(pwr)
+theme_set(theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()))
+source("functions.R")
+```
+
+```{r setup}
+padj_thr <- 0.05
+lfc_thr  <- 1
+n_stratum <- 10 # 2 strata (male and female) per group/treatment
+                # total number of samples = n_stratum * 2 * 2 * 2
+lfc_thresholds <- c(0, 0.5, 1, 1.5, 2, 2.5, 3)
+```
+
+
+```{r pheno_data_download,eval=FALSE}
+## this sometimes fails. The RDS of the object is provided
+Sys.setenv(VROOM_CONNECTION_SIZE=8*131072)
+
+## with getGEO, we can only get the phenoData
+geo <- getGEO("GSE156063")[[1]]
+saveRDS(geo, file="GSE156063.geo")
+```
+
+```{r pheno_data_cleanup}
+geo <- readRDS("GSE156063.geo")
+covar <- as(phenoData(geo), "data.frame")
+
+## remove columns with only one value
+boring <- map_lgl(covar, ~ length(unique(.x)) == 1)
+covar <- covar[ , !boring ] 
+
+## clean up
+covar <- covar %>% 
+  dplyr::rename(gender = "gender:ch1") %>%
+  mutate(disease = gsub(" .*", "", .data[["disease state:ch1"]])) %>%
+  mutate(label = description) %>%
+  mutate(group = disease) %>%
+  arrange(description) %>%
+  dplyr::select(all_of(c("title", "label", "gender", "disease", "group"))) 
+rownames(covar) <- covar$label
+```
+
+```{r featuredata_download}
+## the counts must be downloaded from GEO separately.
+if(!file.exists("GSE156063_swab_gene_counts.csv.gz")) {
+  download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE156nnn/GSE156063/suppl/GSE156063_swab_gene_counts.csv.gz",
+                "GSE156063_swab_gene_counts.csv.gz")
+}
+
+counts <- read_csv("GSE156063_swab_gene_counts.csv.gz")
+.tmp <- counts[[1]]
+counts <- as.matrix(counts[,-1])
+rownames(counts) <- .tmp
+#counts <- counts[ , covar$description ]
+counts <- counts[ , covar$label ]
+lcpm   <- edgeR::cpm(counts, log=TRUE)
+#stopifnot(all(colnames(counts) == covar$description))
+stopifnot(all(colnames(counts) == covar$label))
+
+annot <- data.frame(ENSEMBL = rownames(counts))
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("ENTREZID"), keytype="ENSEMBL")
+annot$ENTREZID <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("SYMBOL"), keytype="ENSEMBL")
+annot$SYMBOL <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("GENENAME"), keytype="ENSEMBL")
+annot$GENENAME <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+```
+
+
+```{r Preparation_of_the_covariates,cache=FALSE}
+sel <- covar$group %in% c("no", "SC2")
+counts <- counts[ , sel ]
+covar  <- covar[ sel, ]
+lcpm   <- lcpm[ , sel ]
+covar$group <- as.character(covar$group)
+
+set.seed(0123)
+
+#covar$disease <- covar$group
+
+g1 <- covar %>% mutate(n=1:n()) %>%
+  group_by(gender, disease) %>% slice_sample(n=n_stratum) %>% pull(n)
+g2 <- covar %>% mutate(n=1:n()) %>% filter(!n %in% g1) %>%
+  group_by(gender, disease) %>% slice_sample(n=n_stratum) %>% pull(n)
+
+covar$group <- NA
+covar$group[g1] <- "G1"
+covar$group[g2] <- "G2"
+
+covar$group.disease <- paste0(covar$group, '_', covar$disease)
+
+```
+
+```{r DESeq2,cache=FALSE}
+## DESeq2 calculations
+## manual cache, since the operation takes a long time
+sel <- !is.na(covar$group)
+
+ds2 <- DESeqDataSetFromMatrix(counts[,sel], colData=covar[sel, ], design=~ 0 + group.disease )
+
+ds2_file <- "ds2_cached.rds"
+if(!file.exists(ds2_file)) {
+  message("Running DESeq2")
+  ds2 <- DESeq(ds2)
+  saveRDS(ds2, file=ds2_file)
+} else {
+  message("Reading ds2 from manual cache")
+  ds2 <- readRDS(ds2_file)
+}
+```
+
+```{r DE_analysis}
+library(tidyverse)
+library(tmod)
+res <- list()
+res$g1 <- results(ds2, contrast=c(-1, 1, 0, 0))
+res$g2 <- results(ds2, contrast=c(0, 0, -1, 1))
+
+res <- map(res, ~ .x %>% as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>% 
+  left_join(annot, by="ENSEMBL") %>%
+  mutate(DEG=!is.na(padj) & abs(log2FoldChange) > lfc_thr & padj < padj_thr)) 
+
+res.merged <- merge(res$g1, res$g2, by=c("ENSEMBL", "SYMBOL", "ENTREZID", "GENENAME"), suffixes=c(".g1", ".g2"))
+```
+
+
+
+```{r GO_db_prepare,cache=TRUE}
+library(msigdbr)
+min_mod_size <- 10
+max_mod_size <- 50
+msig_go_bp <- msigdbr(subcategory="GO:BP")
+mset <- makeTmodFromDataFrame(msig_go_bp, 
+                              feature_col="human_gene_symbol", 
+                              module_col="gs_exact_source", 
+                              title_col="gs_name")
+mset$gs$N <- map_int(mset$gs2gv, length)
+mset <- mset[ mset$gs$N <= max_mod_size & 
+              mset$gs$N >= min_mod_size ]
+```
+
+
+```{r GSEA,cache=TRUE}
+common <- res.merged %>% filter(DEG.g1 & DEG.g2) %>% pull(SYMBOL)
+gsea_res <- map(res, ~ {
+  fg <- .x %>% filter(padj < padj_thr & abs(log2FoldChange) > lfc_thr)
+  fg <- setdiff(fg$SYMBOL, common) # only "specific" genes
+  tmodHGtest(fg=fg, bg=.x$SYMBOL, mset=mset)
+})
+gsea_res_full <- map(res, ~ {
+  fg <- .x %>% filter(padj < padj_thr & abs(log2FoldChange) > lfc_thr)
+  fg <- setdiff(fg$SYMBOL, common) # only "specific" genes
+  tmodHGtest(fg=fg, bg=.x$SYMBOL, mset=mset, qval = Inf)
+})
+message("G1 ", nrow(gsea_res$g1), " G2 ", nrow(gsea_res$g2))
+gsea_res.merged <- merge(gsea_res$g1, gsea_res$g2, by=c("ID", "Title"), suffixes=c(".g1", ".g2"), all=T)
+saveRDS(gsea_res.merged, file="gsea_res_merged.rds")
+```
+
+
+
+
+
+## Gene set enrichments
+
+```{r fig1, fig.width=12,fig.height=4.5,dpi=600,dev="png"}
+p1 <- ggvenn(list(G1=res$g1 %>% filter(DEG) %>% pull(ENSEMBL),
+                         G2=res$g2 %>% filter(DEG) %>% pull(ENSEMBL)),
+             show_percentage=FALSE) +
+      labs(title="Differentially expressed genes") +
+      ylim(-1, 1.4)
+p2 <- ggvenn(list(G1=gsea_res$g1 %>% pull(ID),
+                         G2=gsea_res$g2 %>% pull(ID)),
+              show_percentage=FALSE) +
+      labs(title="Enriched GO terms") +
+      ylim(-1, 1.4)
+
+col1 <- plot_grid(p1, p2, labels="AUTO", nrow=2)
+
+p3 <- plot_gsea(gsea_res$g1 %>% arrange(P.Value) %>% dplyr::slice(1:10)) + ggtitle("G1") +
+  scale_x_discrete(labels=function(x) str_wrap(x, width=25))
+#p3 <- plot_grid(p3, NULL, ncol=1, rel_heights=c(2, 1))
+p4 <- plot_gsea(gsea_res$g2 %>% arrange(P.Value) %>% dplyr::slice(1:10)) + ggtitle("G2") +
+  scale_x_discrete(labels=function(x) str_wrap(x, width=25))
+
+plot_grid(plotlist = list(col1, p3, p4), labels=c('', 'C', 'D'), nrow=1)
+```
+
+---
+
+##
+
+.pull-left[
+
+
+
+]
+
+.pull-right[
+
+<div syle="font-size:small;">
+Weiner 3rd, January, Benedikt Obermayer, and Dieter Beule. "Venn diagrams may indicate erroneous statistical reasoning in transcriptomics." Frontiers in Genetics 13 (2022).
+</div>
+
+]
+
