@@ -238,12 +238,11 @@ names(finfo) <- map_chr(finfo, ~ .x[["journal"]])
 ```
 
 
-
-
+---
 
 ## Gene set enrichments in two groups of patients
 
-```{r fig1, fig.width=12,fig.height=4.5,dpi=600,dev="png"}
+```{r fig1, fig.width=12,fig.height=4.5,dpi=600,dev="png",cache=F}
 p1 <- ggvenn(list(G1=res$g1 %>% filter(DEG) %>% pull(ENSEMBL),
                          G2=res$g2 %>% filter(DEG) %>% pull(ENSEMBL)),
              show_percentage=FALSE) +
@@ -266,8 +265,8 @@ p4 <- plot_gsea(gsea_res$g2 %>% arrange(P.Value) %>% dplyr::slice(1:10)) + ggtit
 plot_grid(plotlist = list(col1, p3, p4), labels=c('', 'C', 'D'), nrow=1)
 ```
 
-"The Difference Between “Significant” and “Not Significant” is not
-Itself Statistically Significant" – Andrew Gelman and Hal Stern
+"*The difference between “significant” and “not significant” is not
+itself statistically significant*" – Andrew Gelman and Hal Stern
 
 ---
 
@@ -275,14 +274,29 @@ Itself Statistically Significant" – Andrew Gelman and Hal Stern
 
 .pull-left[
 
- * In 
- * Not the only problem with GSE!
+ * Out of
+`r .tot <- sum(map_int(finfo, ~ as.integer(.x$analysed)));.tot` papers analysed,
+`r .inc <- sum(map_int(finfo, ~ as.integer(.x$incorrect_count)));.inc` 
+(`r round(100*.inc/.tot)`%) were incorrect.
 
+ * Beware of Venn diagrams 
 
+ * Do not compare significant with non-significant
+
+ * Beware of false positives
+
+ * Do not use gene-based randomization tests
 
 ]
 
 .pull-right[
+
+Presentation: github:january3/presentation-icsb-2022
+
+```{r fig.width=3,fig.height=3,dpi=600,dev="png"}
+library(qrcode)
+plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
+```
 
 <div syle="font-size:small;">
 Weiner 3rd, January, Benedikt Obermayer, and Dieter Beule. "Venn diagrams may indicate erroneous statistical reasoning in transcriptomics." Frontiers in Genetics 13 (2022).
