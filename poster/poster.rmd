@@ -1,0 +1,196 @@
+---
+main_findings: "False discovery rate drives spurious gene set enrichments"
+title: "The Insiduous Trappings<br>of Gene Set Enrichments"
+author: 
+  - name: January Weiner
+    affil: [ 1, ",2" ]
+  - name: Benedikt Obermeyer
+    affil: 1
+  - name: Dieter Beule
+    affil: 1
+affiliation:
+  - num: 1
+    address: Core Unit for Bioinformatics, Berlin Institute of Health at Charite
+  - num: ",2"
+    address: Corresponding author
+date: "`r Sys.Date()`"
+output:
+  posterdown::posterdown_betterport:
+    template: "template.html"
+    self_contained: false
+#---POSTER BODY OPTIONS---#
+poster_height: "1189mm"
+poster_width: "841mm"
+primary_colour: "#70ADC1"
+main_fontfamily: "Calibri"
+font_family: "Calibri"
+body_textsize: "34px"
+main_textalpha: "ff"
+main_textcol: "#ffffff"
+main_topsize: 0.28
+authorextra_color: "#ffffff"
+authorextra_textsize: "50px"
+column_numbers: 2
+logoleft_name: "figures/qrcode.png"
+logoright_name: "figures/tmod_logo.png"
+css: style.css
+link-citations: true
+bibliography: bibliography.bib
+csl: nature.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  results = 'asis',
+  echo = FALSE,
+  comment = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+```
+
+
+```{r echo=FALSE,results="hide"}
+png(filename="figures/qrcode.png", width = 500, height = 500)
+library(qrcode)
+plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
+dev.off()
+
+
+
+```
+
+# Main message
+
+<div style="font-size:150%;">
+
+ * Gene set enrichments appear easy, <br>but they can be tricky. 
+ * Some popular approaches are incorrect and may lead to misleading results
+
+</div>
+
+
+# Abstract
+
+Gene set enrichments remain one of the main tools linking statistical results from high throughput techniques with biological interpretation. In short, they rely on categorizing genes into a number of gene set and using an appriopriate statistical test to examine the given gene set as a whole. 
+However, the apparent simplicity of gene set enrichments is misleading.
+Firstly, incorrect analysis of interactions combined with gene set
+enrichment may lead to results which are artefactual, but related to the
+studied problem. Secondly, using gene-wise randomization procedures in
+testing for gene set enrichment may lead to incongruous results.
+
+# Incorrect analysis of interactions and gene set enrichments
+
+## Example of an incorrect analysis
+
+We have tested two groups of patients, G1 and G2 [@weiner2022venn]. In each group, there were
+individuals who were either infected with Sars-Cov-2 or healthy. We asked the
+question whether the diffences between healthy individuals and those with
+Sars-Cov-2 infection are group-specific.  
+The outline of the incorrect reasoning is as follows: 
+
+ * identify differentially expressed genes (DEGs) in both G1 and G2
+ * for each group, define a "specific signature": genes which are
+   significant in this group, but not the other
+ * use gene set enrichment to find pathways which are "specific" for the
+   given group
+
+```{r figure1, out.width='100%', fig.cap=''}
+knitr::include_graphics('../flashtalk/presentation_files/figure-html/fig1-1.png')
+```
+
+**Fig. 1. Results of differential gene expression analysis
+and gene set enrichment analysis using an incorrect approach.**
+**A**, Venn diagram showing numbers of differentially expressed genes (DEG)
+in each of the two groups, G1 and G2; **B**, Venn diagram showing numbers
+of significantly enriched GO terms in each of the two groups; **C** results
+of gene set enrichment analysis for genes "specific" to group G1; **D**, results of gene set
+enrichment analysis for genes "specific" to group G2 (only top 10 terms are shown).
+
+Figure 1 above shows the results. Indeed, there were many genes and gene
+sets "specific" to one, but not the other group. The gene set enrichments
+found were related to immune response in viral disease, prompting to
+speculate about the differences between groups. 
+
+## The incorrectly derived results are artifacts
+
+Even though the results look convincing, there were, in fact, no
+differences between G1 and G2. Individuals in G1 and G2 were randomly
+sampled from a larger population and the groups are not expected to differ.
+The correct statistical procedure is a gene-level test for presence of
+a significant interaction between group and disease. In the presented data,
+there were no significant DEGs in the interaction contrast.
+
+The problem is in defining genes as "specific" if (i) the gene has a
+significant p-value in one group, and (ii) the gene has no significant
+p-value in the other group. As stated by Andrew Gelman
+[@gelman2006difference], "the difference between significant and
+non-significant is not statistically significant". The fact that we fail to
+detect a difference between control and patients is not proof that the gene
+is not regulated.
+Many genes which are truly regulated (and can be detected in a larger
+population) will be true positives (i.e., significant) in one group,
+but false negative (not significant) in another groups. Thus, the
+"specific" genes are, in fact, the complete opposite.
+
+Incorrect analyses of interactions coupled with gene set enrichments are
+widely spread. In fact, when we searched for the words "venn diagram" and
+"transcriptomics", we found that roughly a third of the papers were
+incorrect.
+
+# Randomization and testing for gene set enrichments
+
+## Randomization in gene set enrichment analysis
+
+Complex measures of gene set enrichments may have no known probabilistic
+distributions and thus a p-value cannot be directly derived from the
+obtained values. In such cases, a randomization test can be used. In
+sample-based randomizations, the calculations are repeated for a large
+number of permutations of the sample labels, which serve to estimate the null
+distribution. However, this requires a sufficient number of samples ($>>$
+10 per group). For small sample sizes, an alternative may be considered:
+randomization of gene labels rather than sample labels.
+
+However, genes within one gene set are more likely to be correlated than genes
+from two different gene sets. Permutation of gene labels results in a
+different gene-wise correlation structure. This may lead to false
+discoveries, because the calculated statistics is higher than expected if
+the genes are independent.
+
+## Comparison between tests
+
+We have compared [@weiner2016tmod] the results of gene set enrichment for two algorithms:
+GSEA [@subramanian2005gene], which uses randomization, and CERNO
+[@zyla2019gene], which computes the p-values analytically. GSEA uses
+sample-wise permutations for sample sizes greater than 10, and gene-wise
+permutations for smaller sample sizes. We have evaluated the performance of
+the algorithm when compared to the same analysis performed by the same
+algorithm on a large sample size. **Figure 1.** shows a dramatic decrease
+in performance of the randomization-based algorithm for sample sizes of 10
+or smaller. 
+
+```{r figure2, out.width='100%', fig.cap=''}
+knitr::include_graphics('figures/cerno_vs_gsea.png')
+```
+
+**Figure 2.** Comparison of the CERNO and GSEA algorithms. **A**,
+Spearmann correlation between p-values for a given sample size with the
+results for a large data set. **B**, performance of the algorithm in
+identifying gene sets found for the large data set, measured as area under
+the curve (AUC). 
+
+
+# Conclusions
+
+<div style="font-size:150%">
+
+ * "Venn diagram driven" gene set enrichments employ an incorrect analysis
+   of interactions which results in spurious, but convincing results
+ * Incorrect analyses are widely spread in scientific literature
+ * Gene-based randomization tests and sample-based randomization test do
+   not return similar results of gene set enrichment analysis
+
+</div>
+# Bibliography
+

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="date" content="2022-10-07" />
+<title>The Insiduous Trappings of Gene Set Enrichments</title>
+
+
+
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+<!--
+Font-awesome icons ie github or twitter
+-->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/brands.css" integrity="sha384-n9+6/aSqa9lBidZMRCQHTHKJscPq6NW4pCQBiMmHdUCvPN8ZOg2zJJTkC7WIezWv" crossorigin="anonymous">
+
+<!--
+Google fonts api stuff
+-->
+<link href='https://fonts.googleapis.com/css?family=Calibri' rel='stylesheet'>
+<link href='https://fonts.googleapis.com/css?family=Calibri' rel='stylesheet'>
+
+<!--
+Here are the required style attributes for css to make this poster work :)
+-->
+<style>
+@page {
+size: 841mm 1189mm;
+margin: 0;
+padding: 0;
+}
+body {
+margin: 0px;
+padding: 0px;
+width: 841mm;
+height: 1189mm;
+text-align: justify;
+font-size: 34px;
+line-height: 1.05;
+}
+/* RMarkdown Class Styles */
+/* center align leaflet map,
+from https://stackoverflow.com/questions/52112119/center-leaflet-in-a-rmarkdown-document */
+.html-widget {
+margin: auto;
+position: sticky;
+margin-top: 2cm;
+margin-bottom: 2cm;
+}
+.leaflet.html-widget.html-widget-static-bound.leaflet-container.leaflet-touch.leaflet-fade-anim.leaflet-grab.leaflet-touch-drag.leaflet-touch-zoom {
+position: sticky;
+width: 100%;
+}
+pre.sourceCode.r, pre.sourceCode.python {
+background-color: #ffffff20;
+border: solid #008080 1mm;
+border-radius: 0.5em;
+padding: 4mm;
+margin: auto;
+margin-top: 1em;
+margin-bottom: 1em;
+/* align-items: center; */
+}
+div.sourceCode {
+background-color: transparent;
+width: 85%;
+margin-left: auto;
+margin-right: auto;
+}
+code.sourceCode.r, code.sourceCode.python {
+background-color: transparent;
+font-size: 20pt;
+border-radius: 2mm;
+}
+code {
+font-size: 25pt;
+font-family: monospace;
+background-color: #00808024;
+color: #008080;
+padding: 1.2mm;
+line-height: 1;
+border-radius: 2mm;
+}
+caption {
+margin-bottom: 10px;
+font-size: 20pt;
+font-style: italic;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #00808020;
+}
+.table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td{
+  border-spacing: 0;
+  font-size: 40%;
+  border-style: none;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  padding-right: 1em;
+  padding-left: 1em;
+  line-height: 1em;
+}
+table {
+  margin: auto;
+}
+th {
+  padding-left: 5mm;
+  padding-right: 5mm;
+}
+.caption {
+font-size: 20pt;
+font-style: italic;
+padding-top: 0;
+}
+.references {
+font-size: 20px;
+line-height: 90%;
+}
+/* Create three unequal columns that floats next to each other */
+.column {
+float: left;
+padding: 0px;
+}
+.outer {
+width: 841mm;
+height: calc(1189mm *  (1 - 0.28 -  - 0.01) );
+-webkit-column-count: 2; /* Chrome, Safari, Opera */
+-moz-column-count: 2; /* Firefox */
+column-count: 2;
+-webkit-column-fill: auto;
+-moz-column-fill: auto;
+column-fill: auto;
+column-gap: 0;
+padding-left: 0cm;
+padding-right: 0cm;
+/* -webkit-column-rule-width: 50%;
+-moz-column-rule-width: 50%;
+column-rule-width: 50%; */
+-webkit-column-rule-style: none;
+-moz-column-rule-style: none;
+column-rule-style: none;
+-webkit-column-rule-color: black;
+-moz-column-rule-color: black;
+column-rule-color: black;
+background-color: #ffffff;
+font-family: Calibri;
+margin-top: calc(1189mm *  0.28 );
+padding-top: 1em;
+padding-bottom: 1em;
+}
+span.citation {
+  color: #008080;
+  font-weight: bold;
+}
+a {
+text-decoration: none;
+color: #008080;
+}
+#title {
+font-size: 125pt;
+text-align: left;
+margin: 0;
+line-height: 98%;
+border-bottom: 0;
+font-weight: normal;
+background: 0;
+}
+#author {
+color:#70ADC1;
+margin: 0;
+line-height: 85%;
+font-size: 1.17em;
+}
+#affiliation {
+padding-top: 0.1em;
+color: ;
+text-align: left;
+font-style: italic;
+font-size: 25px;
+margin: 0;
+}
+sup {
+color: #cc0000;
+}
+.affiliation sup {
+font-size: 20px;
+}
+.author {
+text-align: left;
+}
+.author sup {
+font-size: 30px;
+}
+.author_extra {
+color: #ffffff;
+margin: 0;
+line-height: 85%;
+font-size: 50px;
+text-align: left;
+}
+.outer h1, h2, h3, h4, h5, h6 {
+text-align: left;
+margin: 0;
+font-weight: bold;
+}
+.section h1 {
+  color: #70ADC1;
+  padding-bottom:5px;
+  background:
+    linear-gradient(
+      to right,
+      #70ADC1 1%,
+      #70ADC175 66%,
+      #ffffff 80%,
+      #ffffff 99%
+    )
+    left
+    bottom
+    #ffffff
+    no-repeat;
+  background-size:100% 5px ;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.section h2 {
+  color: #C12079;
+  margin-top: 0.5em;
+
+
+
+}
+.outer p, .level2 {
+color: #000000;
+}
+.outer ol {
+padding-left: 8%;
+padding-right: 8%;
+text-align: left;
+}
+.main {
+width: 841mm;
+height: calc(1189mm * 0.28);
+position: absolute;
+background-color: #FFFFFF;
+color: #ffffffff;
+font-family: Calibri;
+background-image: url("figures/bih_poster_header_2.png");
+}
+.main strong {
+color: #ffffff;
+}
+.main strong > sup {
+color: #ffffff;
+}
+.main sup {
+color: #ffffffff;
+}
+#main-img-left {
+width: 10%;
+left: 0.5in;
+bottom: 0.2in;
+position: absolute;
+}
+#main-img-center {
+width: 10%;
+left: calc(841mm * 0.45);
+bottom: 0.5in;
+position: absolute;
+}
+#main-img-right {
+width: 10%;
+right: 0.5in;
+bottom: 0.2in;
+position: absolute;
+}
+.main_title {
+font-size: 150px;
+font-family: Calibri;
+text-align: center;
+margin: 0;
+position: absolute;
+top: 40%;
+-ms-transform: translateY(-50%);
+transform: translateY(-50%);
+margin-left: 1em;
+}
+.fab {
+color: #00000060;
+font-size: 25px;
+}
+.twitter, i {
+color: #00000060;
+font-size: 35px;
+text-decoration: none;
+}
+a.email {
+text-decoration: none;
+color: #00000060;
+font-size: 35px;
+}
+.envelope {
+color: #00000060;
+font-size: 5px;
+text-decoration: none;
+}
+.globe {
+color: #00000060;
+font-size: 5px;
+text-decoration: none;
+}
+.globetext {
+color: #00000060;
+font-size: 35px;
+text-decoration: none;
+}
+.poster_wrap {
+width: 841mm;
+height: 1189mm;
+padding: 0cm;
+}
+.main_bottom {
+width: 841mm;
+height: calc(1189mm * 0.1);
+margin-top: calc(1189mm * 0.9);
+position: absolute;
+background-color: #70ADC1;
+background-image: linear-gradient(#FFFFFF, #70ADC1);
+}
+.section {
+  padding-left: 10mm;
+  padding-right: 10mm;
+}
+span > #tab:mytable {
+  font-weight: bold;
+}
+.orcid img {
+  width: 3%;
+}
+.emphasis {
+  background-color: #008080;
+  color: #ffffff;
+  border: solid #0b2045 3mm;
+  margin: 1em;
+  padding-left: 0;
+  padding-right: 0;
+}
+.emphasis h1 {
+  font-weight: bold;
+  background: none;
+  background-color: #0b2045;
+  padding-bottom: 5mm;
+  padding-top: 1mm;
+  margin-top: -1mm;
+  margin-right: -1mm;
+  margin-left: -1mm;
+}
+.emphasis blockquote {
+  border: 0;
+}
+.emphasis ol {
+  padding: 0;
+  padding-left: 8%;
+  font-size: 100%;
+  font-weight: bold;
+}
+.emphasis p {
+  color: #ffffff;
+}
+</style>
+</head>
+<body>
+
+
+<div class="poster_wrap">
+
+<div class="column outer">
+<div class="section">
+
+</div>
+
+<div id="main-message" class="section level1">
+<h1>Main message</h1>
+<div style="font-size:150%;">
+<ul>
+<li>Gene set enrichments appear easy, <br>but they can be tricky.</li>
+<li>Some popular approaches are incorrect and may lead to misleading results</li>
+</ul>
+</div>
+</div>
+<div id="abstract" class="section level1">
+<h1>Abstract</h1>
+<p>Gene set enrichments remain one of the main tools linking statistical results from high throughput techniques with biological interpretation. In short, they rely on categorizing genes into a number of gene set and using an appriopriate statistical test to examine the given gene set as a whole.
+However, the apparent simplicity of gene set enrichments is misleading.
+Firstly, incorrect analysis of interactions combined with gene set
+enrichment may lead to results which are artefactual, but related to the
+studied problem. Secondly, using gene-wise randomization procedures in
+testing for gene set enrichment may lead to incongruous results.</p>
+</div>
+<div id="incorrect-analysis-of-interactions-and-gene-set-enrichments" class="section level1">
+<h1>Incorrect analysis of interactions and gene set enrichments</h1>
+<div id="example-of-an-incorrect-analysis" class="section level2">
+<h2>Example of an incorrect analysis</h2>
+<p>We have tested two groups of patients, G1 and G2<span class="citation"><sup><a href="#ref-weiner2022venn" role="doc-biblioref">1</a></sup></span>. In each group, there were
+individuals who were either infected with Sars-Cov-2 or healthy. We asked the
+question whether the diffences between healthy individuals and those with
+Sars-Cov-2 infection are group-specific.<br />
+The outline of the incorrect reasoning is as follows:</p>
+<ul>
+<li>identify differentially expressed genes (DEGs) in both G1 and G2</li>
+<li>for each group, define a “specific signature”: genes which are
+significant in this group, but not the other</li>
+<li>use gene set enrichment to find pathways which are “specific” for the
+given group</li>
+</ul>
+<p><img src="../flashtalk/presentation_files/figure-html/fig1-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p><strong>Fig. 1. Results of differential gene expression analysis
+and gene set enrichment analysis using an incorrect approach.</strong>
+<strong>A</strong>, Venn diagram showing numbers of differentially expressed genes (DEG)
+in each of the two groups, G1 and G2; <strong>B</strong>, Venn diagram showing numbers
+of significantly enriched GO terms in each of the two groups; <strong>C</strong> results
+of gene set enrichment analysis for genes “specific” to group G1; <strong>D</strong>, results of gene set
+enrichment analysis for genes “specific” to group G2 (only top 10 terms are shown).</p>
+<p>Figure 1 above shows the results. Indeed, there were many genes and gene
+sets “specific” to one, but not the other group. The gene set enrichments
+found were related to immune response in viral disease, prompting to
+speculate about the differences between groups.</p>
+</div>
+<div id="the-incorrectly-derived-results-are-artifacts" class="section level2">
+<h2>The incorrectly derived results are artifacts</h2>
+<p>Even though the results look convincing, there were, in fact, no
+differences between G1 and G2. Individuals in G1 and G2 were randomly
+sampled from a larger population and the groups are not expected to differ.
+The correct statistical procedure is a gene-level test for presence of
+a significant interaction between group and disease. In the presented data,
+there were no significant DEGs in the interaction contrast.</p>
+<p>The problem is in defining genes as “specific” if (i) the gene has a
+significant p-value in one group, and (ii) the gene has no significant
+p-value in the other group. As stated by Andrew Gelman<span class="citation"><sup><a href="#ref-gelman2006difference" role="doc-biblioref">2</a></sup></span>, “the difference between significant and
+non-significant is not statistically significant”. The fact that we fail to
+detect a difference between control and patients is not proof that the gene
+is not regulated.
+Many genes which are truly regulated (and can be detected in a larger
+population) will be true positives (i.e., significant) in one group,
+but false negative (not significant) in another groups. Thus, the
+“specific” genes are, in fact, the complete opposite.</p>
+<p>Incorrect analyses of interactions coupled with gene set enrichments are
+widely spread. In fact, when we searched for the words “venn diagram” and
+“transcriptomics”, we found that roughly a third of the papers were
+incorrect.</p>
+</div>
+</div>
+<div id="randomization-and-testing-for-gene-set-enrichments" class="section level1">
+<h1>Randomization and testing for gene set enrichments</h1>
+<div id="randomization-in-gene-set-enrichment-analysis" class="section level2">
+<h2>Randomization in gene set enrichment analysis</h2>
+<p>Complex measures of gene set enrichments may have no known probabilistic
+distributions and thus a p-value cannot be directly derived from the
+obtained values. In such cases, a randomization test can be used. In
+sample-based randomizations, the calculations are repeated for a large
+number of permutations of the sample labels, which serve to estimate the null
+distribution. However, this requires a sufficient number of samples (<span class="math inline">\(&gt;&gt;\)</span>
+10 per group). For small sample sizes, an alternative may be considered:
+randomization of gene labels rather than sample labels.</p>
+<p>However, genes within one gene set are more likely to be correlated than genes
+from two different gene sets. Permutation of gene labels results in a
+different gene-wise correlation structure. This may lead to false
+discoveries, because the calculated statistics is higher than expected if
+the genes are independent.</p>
+</div>
+<div id="comparison-between-tests" class="section level2">
+<h2>Comparison between tests</h2>
+<p>We have compared<span class="citation"><sup><a href="#ref-weiner2016tmod" role="doc-biblioref">3</a></sup></span> the results of gene set enrichment for two algorithms:
+GSEA<span class="citation"><sup><a href="#ref-subramanian2005gene" role="doc-biblioref">4</a></sup></span>, which uses randomization, and CERNO<span class="citation"><sup><a href="#ref-zyla2019gene" role="doc-biblioref">5</a></sup></span>, which computes the p-values analytically. GSEA uses
+sample-wise permutations for sample sizes greater than 10, and gene-wise
+permutations for smaller sample sizes. We have evaluated the performance of
+the algorithm when compared to the same analysis performed by the same
+algorithm on a large sample size. <strong>Figure 1.</strong> shows a dramatic decrease
+in performance of the randomization-based algorithm for sample sizes of 10
+or smaller.</p>
+<p><img src="figures/cerno_vs_gsea.png" width="100%" style="display: block; margin: auto;" /></p>
+<p><strong>Figure 2.</strong> Comparison of the CERNO and GSEA algorithms. <strong>A</strong>,
+Spearmann correlation between p-values for a given sample size with the
+results for a large data set. <strong>B</strong>, performance of the algorithm in
+identifying gene sets found for the large data set, measured as area under
+the curve (AUC).</p>
+</div>
+</div>
+<div id="conclusions" class="section level1">
+<h1>Conclusions</h1>
+<div style="font-size:150%">
+<ul>
+<li>“Venn diagram driven” gene set enrichments employ an incorrect analysis
+of interactions which results in spurious, but convincing results</li>
+<li>Incorrect analyses are widely spread in scientific literature</li>
+<li>Gene-based randomization tests and sample-based randomization test do
+not return similar results of gene set enrichment analysis</li>
+</ul>
+</div>
+</div>
+<div id="bibliography" class="section level1 unnumbered">
+<h1>Bibliography</h1>
+<div id="refs" class="references csl-bib-body" line-spacing="2">
+<div id="ref-weiner2022venn" class="csl-entry">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Weiner 3rd, J., Obermayer, B. &amp; Beule, D. Venn diagrams may indicate erroneous statistical reasoning in transcriptomics. <em>Frontiers in Genetics</em> <strong>13,</strong> (2022).</div>
+</div>
+<div id="ref-gelman2006difference" class="csl-entry">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Gelman, A. &amp; Stern, H. The difference between <span>‘significant’</span> and <span>‘not significant’</span> is not itself statistically significant. <em>The American Statistician</em> <strong>60,</strong> 328–331 (2006).</div>
+</div>
+<div id="ref-weiner2016tmod" class="csl-entry">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Weiner 3rd, J. &amp; Domaszewska, T. Tmod: An r package for general and multivariate enrichment analysis. <em>PeerJ Preprints</em> <strong>4,</strong> (2016).</div>
+</div>
+<div id="ref-subramanian2005gene" class="csl-entry">
+<div class="csl-left-margin">4. </div><div class="csl-right-inline">Subramanian, A. <em>et al.</em> Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. <em>Proceedings of the National Academy of Sciences</em> <strong>102,</strong> 15545–15550 (2005).</div>
+</div>
+<div id="ref-zyla2019gene" class="csl-entry">
+<div class="csl-left-margin">5. </div><div class="csl-right-inline">Zyla, J. <em>et al.</em> Gene set enrichment for reproducible science: Comparison of CERNO and eight other algorithms. <em>Bioinformatics</em> <strong>35,</strong> 5146–5154 (2019).</div>
+</div>
+</div>
+</div>
+
+</div>
+  <div class="main">
+<div class="main_title">
+
+<!-- False discovery rate drives spurious gene set enrichments -->
+
+<h1 id="title">The Insiduous Trappings<br>of Gene Set Enrichments</h1>
+<h3 id="author" class="author">
+
+  </h3>
+
+<h5 id="author_extra", class="author_extra">
+January Weiner<sup>1,2</sup>
+ Benedikt Obermeyer<sup>1</sup>
+ Dieter Beule<sup>1</sup>
+</h5>
+
+
+<p id="affiliation" class="affiliation">
+<sup>1</sup> Core Unit for Bioinformatics, Berlin Institute of Health at Charite<br> <sup>,2</sup> Corresponding author
+</p>
+
+</div>
+</div>
+<div class="main_bottom">
+<img id="main-img-left" src=figures/qrcode.png>
+<img id="main-img-center" src=>
+<img id="main-img-right" src=figures/tmod_logo.png>
+</div>
+</div>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+var script = document.createElement("script");
+script.type = "text/javascript";
+var src = "true";
+if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+if (location.protocol !== "file:" && /^https?:/.test(src))
+src = src.replace(/^https?:/, '');
+script.src = src;
+document.getElementsByTagName("head")[0].appendChild(script);
+})();
+</script>
+
+
+</body>
+</html>
