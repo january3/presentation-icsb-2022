@@ -44,7 +44,7 @@ padding: 0px;
 width: 841mm;
 height: 1189mm;
 text-align: justify;
-font-size: 34px;
+font-size: 32px;
 line-height: 1.05;
 }
 /* RMarkdown Class Styles */
@@ -392,8 +392,8 @@ span > #tab:mytable {
 <h1>Main message</h1>
 <div style="font-size:150%;">
 <ul>
-<li>Gene set enrichments appear easy, <br>but they can be tricky.</li>
-<li>Some popular approaches are incorrect and may lead to misleading results</li>
+<li>Gene set enrichments are tricky</li>
+<li>Incorrect and misleading results are widespread</li>
 </ul>
 </div>
 </div>
@@ -423,6 +423,7 @@ significant in this group, but not the other</li>
 given group</li>
 </ul>
 <p><img src="../flashtalk/presentation_files/figure-html/fig1-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<div style="font-size:90%;margin-left:20px">
 <p><strong>Fig. 1. Results of differential gene expression analysis
 and gene set enrichment analysis using an incorrect approach.</strong>
 <strong>A</strong>, Venn diagram showing numbers of differentially expressed genes (DEG)
@@ -430,6 +431,7 @@ in each of the two groups, G1 and G2; <strong>B</strong>, Venn diagram showing n
 of significantly enriched GO terms in each of the two groups; <strong>C</strong> results
 of gene set enrichment analysis for genes “specific” to group G1; <strong>D</strong>, results of gene set
 enrichment analysis for genes “specific” to group G2 (only top 10 terms are shown).</p>
+</div>
 <p>Figure 1 above shows the results. Indeed, there were many genes and gene
 sets “specific” to one, but not the other group. The gene set enrichments
 found were related to immune response in viral disease, prompting to
@@ -445,8 +447,8 @@ a significant interaction between group and disease. In the presented data,
 there were no significant DEGs in the interaction contrast.</p>
 <p>The problem is in defining genes as “specific” if (i) the gene has a
 significant p-value in one group, and (ii) the gene has no significant
-p-value in the other group. As stated by Andrew Gelman<span class="citation"><sup><a href="#ref-gelman2006difference" role="doc-biblioref">2</a></sup></span>, “the difference between significant and
-non-significant is not statistically significant”. The fact that we fail to
+p-value in the other group. As stated by Andrew Gelman<span class="citation"><sup><a href="#ref-gelman2006difference" role="doc-biblioref">2</a></sup></span>, <strong>“the difference between significant and
+non-significant is not statistically significant”</strong>. The fact that we fail to
 detect a difference between control and patients is not proof that the gene
 is not regulated.
 Many genes which are truly regulated (and can be detected in a larger
@@ -457,6 +459,7 @@ but false negative (not significant) in another groups. Thus, the
 widely spread. In fact, when we searched for the words “venn diagram” and
 “transcriptomics”, we found that roughly a third of the papers were
 incorrect.</p>
+<p><br/></p>
 </div>
 </div>
 <div id="randomization-and-testing-for-gene-set-enrichments" class="section level1">
@@ -488,11 +491,20 @@ algorithm on a large sample size. <strong>Figure 1.</strong> shows a dramatic de
 in performance of the randomization-based algorithm for sample sizes of 10
 or smaller.</p>
 <p><img src="figures/cerno_vs_gsea.png" width="100%" style="display: block; margin: auto;" /></p>
+<div style="font-size:90%;margin-left:20px">
 <p><strong>Figure 2.</strong> Comparison of the CERNO and GSEA algorithms. <strong>A</strong>,
 Spearmann correlation between p-values for a given sample size with the
 results for a large data set. <strong>B</strong>, performance of the algorithm in
 identifying gene sets found for the large data set, measured as area under
 the curve (AUC).</p>
+</div>
+<p>The gene-wise randomization procedures are used in highly popular R
+packages for functional analysis, and consequently, we are currently
+investigating whether these findings hold in general. Specifically, we
+would like to understand how (and to what extent) the gene-wise correlation
+structure influences gene-wise randomization testing and under what
+circumstances the results from gene-wise randomization testing are similar
+to the results from other procedures.</p>
 </div>
 </div>
 <div id="conclusions" class="section level1">

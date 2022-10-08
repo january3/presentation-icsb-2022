@@ -24,7 +24,7 @@ poster_width: "841mm"
 primary_colour: "#70ADC1"
 main_fontfamily: "Calibri"
 font_family: "Calibri"
-body_textsize: "34px"
+body_textsize: "32px"
 main_textalpha: "ff"
 main_textcol: "#ffffff"
 main_topsize: 0.28
@@ -65,8 +65,8 @@ dev.off()
 
 <div style="font-size:150%;">
 
- * Gene set enrichments appear easy, <br>but they can be tricky. 
- * Some popular approaches are incorrect and may lead to misleading results
+ * Gene set enrichments are tricky
+ * Incorrect and misleading results are widespread
 
 </div>
 
@@ -100,6 +100,7 @@ The outline of the incorrect reasoning is as follows:
 knitr::include_graphics('../flashtalk/presentation_files/figure-html/fig1-1.png')
 ```
 
+<div style="font-size:90%;margin-left:20px">
 **Fig. 1. Results of differential gene expression analysis
 and gene set enrichment analysis using an incorrect approach.**
 **A**, Venn diagram showing numbers of differentially expressed genes (DEG)
@@ -107,6 +108,7 @@ in each of the two groups, G1 and G2; **B**, Venn diagram showing numbers
 of significantly enriched GO terms in each of the two groups; **C** results
 of gene set enrichment analysis for genes "specific" to group G1; **D**, results of gene set
 enrichment analysis for genes "specific" to group G2 (only top 10 terms are shown).
+</div>
 
 Figure 1 above shows the results. Indeed, there were many genes and gene
 sets "specific" to one, but not the other group. The gene set enrichments
@@ -125,8 +127,8 @@ there were no significant DEGs in the interaction contrast.
 The problem is in defining genes as "specific" if (i) the gene has a
 significant p-value in one group, and (ii) the gene has no significant
 p-value in the other group. As stated by Andrew Gelman
-[@gelman2006difference], "the difference between significant and
-non-significant is not statistically significant". The fact that we fail to
+[@gelman2006difference], **"the difference between significant and
+non-significant is not statistically significant"**. The fact that we fail to
 detect a difference between control and patients is not proof that the gene
 is not regulated.
 Many genes which are truly regulated (and can be detected in a larger
@@ -138,6 +140,8 @@ Incorrect analyses of interactions coupled with gene set enrichments are
 widely spread. In fact, when we searched for the words "venn diagram" and
 "transcriptomics", we found that roughly a third of the papers were
 incorrect.
+
+<br/>
 
 # Randomization and testing for gene set enrichments
 
@@ -174,11 +178,21 @@ or smaller.
 knitr::include_graphics('figures/cerno_vs_gsea.png')
 ```
 
+<div style="font-size:90%;margin-left:20px">
 **Figure 2.** Comparison of the CERNO and GSEA algorithms. **A**,
 Spearmann correlation between p-values for a given sample size with the
 results for a large data set. **B**, performance of the algorithm in
 identifying gene sets found for the large data set, measured as area under
 the curve (AUC). 
+</div>
+
+The gene-wise randomization procedures are used in highly popular R
+packages for functional analysis, and consequently,  we are currently
+investigating whether these findings hold in general.  Specifically, we
+would like to understand how (and to what extent) the gene-wise correlation
+structure influences gene-wise randomization testing and under what
+circumstances the results from gene-wise randomization testing are similar
+to the results from other procedures.
 
 
 # Conclusions
