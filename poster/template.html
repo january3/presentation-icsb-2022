@@ -142,13 +142,6 @@ padding: 0px;
 .outer {
 width: $if(poster_width)$$poster_width$$else$36in$endif$;
 height: calc($if(poster_height)$$poster_height$$else$48in$endif$ * $if(main_topsize)$ (1 - $main_topsize$ - $main_bottomsize$ - 0.01) $else$ 0.6325 $endif$);
--webkit-column-count: $if(column_numbers)$$column_numbers$$else$3$endif$; /* Chrome, Safari, Opera */
--moz-column-count: $if(column_numbers)$$column_numbers$$else$3$endif$; /* Firefox */
-column-count: $if(column_numbers)$$column_numbers$$else$3$endif$;
--webkit-column-fill: auto;
--moz-column-fill: auto;
-column-fill: auto;
-column-gap: 0;
 padding-left: 0cm;
 padding-right: 0cm;
 /* -webkit-column-rule-width: 50%;
@@ -221,7 +214,21 @@ text-align: left;
 margin: 0;
 font-weight: bold;
 }
+
+.level1 > .level2:first-of-type {
+-webkit-column-count: $if(column_numbers)$$column_numbers$$else$3$endif$; /* Chrome, Safari, Opera */
+-moz-column-count: $if(column_numbers)$$column_numbers$$else$3$endif$; /* Firefox */
+column-count: $if(column_numbers)$$column_numbers$$else$3$endif$;
+-webkit-column-fill: auto;
+-moz-column-fill: auto;
+column-fill: auto;
+column-gap: 0;
+}
+
+
 .section h1 {
+
+
   color: #70ADC1;
   padding-bottom:5px;
   background:
@@ -399,13 +406,12 @@ $endfor$
 <div class="poster_wrap">
 
 <div class="column outer">
-<div class="section">
-
-</div>
+  <div class="section"></div>
 
 $body$
 
 </div>
+
   <div class="main">
 <div class="main_title">
 
