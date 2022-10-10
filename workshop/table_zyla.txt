@@ -1,0 +1,12 @@
+Algorithm	CERNO	GeneSetTest	GLOBALTEST	GSEA	GSVA	ORA	PADOG	PLAGE	Wilcoxon GST
+Sensitivity 	+ 	+ 	+ 	+ 	−− 	+ 	++ 	+ 	+ 
+FPR 	− 	−− 	++ 	+− 	− 	+ 	+ 	− 	−− 
+Time 	+ 	− 	++ 	−− 	+ 	+ 	+− 	+ 	− 
+Prioritization 	+ 	+ 	− 	+ 	−− 	+− 	++ 	+ 	+ 
+Reproducibility 	++ 	+ 	− 	+ 	+ 	− 	+ 	−− 	− 
+Sensitive to GS size 	No 	No 	Yes 	No 	No 	No 	No 	Yes 	No 
+Sensitive to sample size 	No 	No 	Yes! 	No 	No 	No 	No 	Yes 	No 
+Data input 	Ordered gene list 	Ordered gene list 	Expression matrix + class labels 	Expression matrix + class labels 	Expression matrix 	List of DEGs and background 	Expression matrix + class labels 	Expression matrix 	Ordered gene list 
+GS input 	Built-in modules or user input 	User input 	Built-in GSs only 	User input 	User input 	User input 	User input 	User input 	User input 
+Alternative ranking metrics 	Yes 	Yes 	No 	Yes 	N.A. 	Yes 	No 	N.A. 	Yes 
+

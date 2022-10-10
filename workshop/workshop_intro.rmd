@@ -1,0 +1,132 @@
+---
+title: "Gene set enrichment workshop"
+subtitle: ""
+author: "January Weiner"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    self-contained: true
+    css: ["default", "files/cubi-fonts.css", "files/style.css" ]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      countIncrementalSlides: false
+      ratio: "16:9"
+toc: no
+---
+
+```{r,echo=FALSE}
+## Set default options for the knitr RMD processing
+knitr::opts_chunk$set(echo=FALSE,warning=FALSE,message=FALSE,fig.width=5,fig.height=5,cache=FALSE,autodep=TRUE, results="hide")
+```
+
+```{r libraries,cache=FALSE}
+```
+
+## First things first
+
+.pull-left[
+
+[https://github.com/january3/presentation-icsb-2022](https://github.com/january3/presentation-icsb-2022)
+
+```{r}
+library(qrcode)
+plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
+```
+
+]
+
+.pull-right[
+ 
+ * A few points to discuss
+   - tmod
+   - effect sizes: ROC curves and AUC
+ * A short demo
+   - using tmod/CERNO
+   - combining with PCA
+   - individual enrichments
+   - leading edge analysis
+   - custom gene sets
+ * Your turn + discussion
+
+]
+
+---
+
+## What is out there?
+
+
+![](figures/zyla_overview.jpeg)
+
+
+
+
+.myfootnote[
+
+Zyla J, Marczyk M, Domaszewska T, Kaufmann SH, Polanska J, **Weiner 3rd J.** Gene set enrichment for reproducible science: comparison of CERNO and eight other algorithms. Bioinformatics. 2019 Dec 15;35(24):5146-54.
+]
+
+
+---
+
+
+```{r results="markdown"}
+library(tidyverse)
+overview <- read_table("table_zyla.txt")
+knitr::kable(overview)
+```
+
+----
+
+.pull-left[
+
+## Why am I using tmod?
+
+ * CERNO is fast and reproducible
+ * included gene sets are unique and useful
+ * unique visualizations
+ * tidyverse coding style rather than BioConductor coding style
+
+
+]
+
+--
+
+.pull-right[
+
+## When am I not using tmod?
+ 
+ * I am required to use fgsea (using not the most popular package is often
+   a pain in the neck!)
+
+In these cases, I use both CERNO and fgsea and study the differences
+
+ * small gene universe
+   - olink
+   - some metabolic profiling projects
+   - nanostring
+
+In this cases, I often use PLAGE (also implemented in tmod)
+
+
+]
+
+---
+
+## Effect size, AUC and ROC curves
+
+ * good effect size measure does not depend
+   on sample size (although can be correlated with p-value)
+ * AUC (area under curve) has advantages:
+   * easy to interpret and show graphically
+   * related to rank biserial correlation (effect size for the U-test)
+
+
+
+
+---
+
+## Eigengenes
+
+Basically: run a PCA on a gene set, take the first component (mind the
+sign!), use this value as a relative per-sample pathway score
