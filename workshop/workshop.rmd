@@ -250,6 +250,7 @@ Below, `counts.rds` contains the raw RNA-seq counts, which I first convert
 to log~2~ counts per million.
 
 ```{r eigengenes_manual}
+data(tmod)
 counts <- readRDS("data/counts.rds")
 
 lcpm <- edgeR::cpm(counts, log=TRUE)
