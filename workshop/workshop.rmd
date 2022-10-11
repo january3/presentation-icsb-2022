@@ -240,7 +240,7 @@ evidencePlot(gl, m = "LI.M165")
 evidencePlot(gl, m = "LI.M4.0")
 ```
 
-# Eigengenes
+## Eigengenes
 
 
 
@@ -291,9 +291,9 @@ plot_grid(plotlist=plots)
 
 
 
+# Combining GSE with other tools
 
-
-# Combining gene set enrichments with PCA
+## Combining gene set enrichments with PCA
 
 Using a method like tmodCERNOtest, tmodUtest or fsgsea makes it possible to
 apply gene set enrichment to any single ranked list of genes.
@@ -338,6 +338,64 @@ ggplot(pca_df, aes(x=PC2, y=PC3, color=disease)) + geom_point()
 Check the function `tmod_pca` for more details.
 
 
+## Machine learning
+
+
+```{r}
+library(randomForest)
+vars <- apply(lcpm, 1, var)
+sel <- vars > quantile(vars, .75)
+rf <- randomForest(t(lcpm[sel, ]), factor(covar$disease), importance=TRUE)
+print(rf)
+```
+
+
+```{r}
+if(require(myfuncs)) {
+  rocplot(rf2pr(rf), confmat = F)
+}
+
+```
+
+We can run gene set enrichment analysis on the genes ordered by variable
+importance.
+
+
+
+```{r}
+rf$importance %>% as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>%
+  merge(annot) %>% arrange(-MeanDecreaseAccuracy) %>%
+  pull(SYMBOL) %>% tmodCERNOtest()
+```
+
+## Correlation analysis
+
+Let us consider the gene ANKRD22. Based on coexpression, what function is
+it related to? We will first remove the disease effect so as we are
+clustering only by variations in expression within the groups, and not by
+changes between the groups.
+
+
+```{r results="markdown"}
+lcpm_c <- lm(t(lcpm) ~ disease, data=covar)$residuals
+lcpm_c <- t(lcpm_c)
+
+ankrd22_i <- which(annot$SYMBOL == "ANKRD22")
+cor_ank <- cor(lcpm_c[ankrd22_i, ], t(lcpm_c)) %>% t() %>%
+  as.data.frame() %>% rownames_to_column("ENSEMBL") %>%
+  merge(annot) 
+tcor <- cor_ank %>% arrange(-abs(V1)) %>% pull(SYMBOL) %>%
+  tmodCERNOtest() %>% filter(N1 < 30 & adj.P.Val < 1e-3) %>%
+  arrange(-AUC)
+print(tcor)
+```
+
+
+
+
+
+
 # Using gene sets from msigdbr
 
 Converting the data frame from the msigdbr package for use with tmod is straightforward:
@@ -363,6 +421,8 @@ tmodCERNOtest(gl, mset=goset, qval = 1e-3) %>%
   formatSignif(c("adj.P.Val", "P.Value")) %>%
   formatRound(c("cES", "AUC"))
 ```
+
+# Disentangling results
 
 ## Upset plots
 
