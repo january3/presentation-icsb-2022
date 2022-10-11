@@ -498,6 +498,71 @@ names(sgenes) <- contrasts_v
 ggPanelplot(res, sgenes=sgenes, filter_row_q = 1e-3, filter_row_auc = .85, q_thr=0.01)
 ```
 
+## Concordance / discordance plots
+
+Are responses on day 1 in Fluad similar to responses on day 1 in Agrippal?
+
+ * test for interaction, or
+ * use disco plots
+
+$$d_s = \log_2 FC_A  \cdot \log_2 FC_B \cdot |\log_{10}p_A + \log_{10}p_B|$$
+
+
+```{r}
+disco <- function(lfc1, lfc2, pval1, pval2) {
+	lfc1 * lfc2 * abs(log10(pval1) + log10(pval2))
+}
+
+tt <- tt %>% mutate(disco=disco(logFC.F_1, logFC.A_1, qval.F_1, qval.A_1)) %>%
+  mutate(disco=ifelse(abs(disco) > .5, sign(disco), disco)) %>%
+  arrange(abs(disco))
+
+
+
+ggplot(tt, aes(x=logFC.F_1, y=logFC.A_1, color=disco)) +
+  scale_color_gradient2(low="blue", mid="grey", high = "red") +
+  geom_point(alpha=.1) +
+  geom_abline(slope = 1, intercept = 0, color="grey")
+
+```
+
+How about F day 1 and F day 5?
+
+
+
+```{r}
+tt <- tt %>% mutate(disco=disco(logFC.F_1, logFC.F_5, qval.F_1, qval.F_5)) %>%
+  mutate(disco=ifelse(abs(disco) > .5, sign(disco), disco)) %>%
+  arrange(abs(disco))
+
+
+
+ggplot(tt, aes(x=logFC.F_1, y=logFC.F_5, color=disco)) +
+  scale_color_gradient2(low="blue", mid="grey", high = "red") +
+  geom_point(alpha=.1) +
+  geom_abline(slope = 1, intercept = 0, color="grey")
+```
+
+We can now make gene set enrichment of the *discordant* and *concordant*
+gene sets.
+
+
+```{r}
+#| fig.width=6,
+#| fig.height=12
+tdisco <- list()
+tdisco$discordant <- tt %>% arrange(disco) %>% pull(GENE_SYMBOL) %>%
+  tmodCERNOtest() %>% filter(AUC > .55)
+tdisco$concordant <- tt %>% arrange(-disco) %>% pull(GENE_SYMBOL) %>%
+  tmodCERNOtest() %>% filter(AUC > .55)
+sgenes <- tmodDecideTests(tt$GENE_SYMBOL, lfc=tt$disco, lfc.thr = 0)
+sgenes <- list(discordant=sgenes[[1]], concordant=sgenes[[1]])
+ggPanelplot(tdisco, sgenes=sgenes)
+```
+
+Note: there is more to the gene set enrichment analysis with disco. There
+will be more on that in both the tmod package and the tmod manual.
+
 
 
 
