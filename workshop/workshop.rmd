@@ -460,11 +460,11 @@ Which genes are driving the enrichment?
 
 
 ```{r}
-evidencePlot(gl, m = "LI.M165", mset=tmod)
+evidencePlot(gl, m = "LI.M165")
 ```
 
 ```{r}
-evidencePlot(gl, m = "LI.M165", mset=tmod, style="gsea")
+evidencePlot(gl, m = "LI.M165", style="gsea")
 ```
 
 
@@ -480,7 +480,7 @@ lea
 ```{r}
 clr <- ifelse(gl %in% lea[[1]], "red", "grey")
 names(clr) <- gl
-evidencePlot(gl, m = "LI.M165", mset=tmod,
+evidencePlot(gl, m = "LI.M165", 
                gene.labels=TRUE,
                gene.colors = clr)
 ```
@@ -491,7 +491,7 @@ And GSEA style:
 ```{r}
 clr <- ifelse(gl %in% lea[[1]], "red", "grey")
 names(clr) <- gl
-evidencePlot(gl, m = "LI.M165", mset=tmod,
+evidencePlot(gl, m = "LI.M165", 
                gene.labels=TRUE,
                gene.colors = clr,
                style="gsea")
