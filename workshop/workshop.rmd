@@ -32,10 +32,10 @@ theme_set(theme_minimal())
 ## Basic analysis
 
 This is a data set that I used in my poster. It is available from GEO and
-contains RNA-Seq counts for healthy individuals and COVID-19 patients.
+contains RNA-Seq counts for healthy individuals and COVID-19 patients, described by @mick2020upper.
 
 The data set has been already processed and downloaded; however, below you
-will find the code to replicate this procedure.
+will find the code to replicate this procedure (if you want).
 
 
 
@@ -233,11 +233,11 @@ Evidence plot – a ROC curve:
 ```{r evidence plots}
 #| fig.width=12,
 #| fig.height=12
-g1 <- ggEvidencePlot(gl, m = "DC.M1.2") + ggtitle("AUC 0.99")
-g2 <- ggEvidencePlot(gl, m = "LI.M68") + ggtitle("AUC 0.93")
-g3 <- ggEvidencePlot(gl, m = "LI.M165") + ggtitle("AUC 0.76")
-g4 <- ggEvidencePlot(gl, m = "LI.M4.0") + ggtitle("AUC 0.61")
-plot_grid(g1, g2, g3, g4, nrow=2)
+par(mfrow=c(2,2))
+evidencePlot(gl, m = "DC.M1.2", gene.labels=TRUE)
+evidencePlot(gl, m = "LI.M68", gene.labels=TRUE)
+evidencePlot(gl, m = "LI.M165")
+evidencePlot(gl, m = "LI.M4.0")
 ```
 
 # Eigengenes
@@ -314,6 +314,8 @@ We can sort all the genes by their decreasing absolute loadings in the pca objec
 
 
 ```{r}
+#| fig.width=12,
+#| fig.height=8
 pcares <- map(1:10, ~ {
                 gl <- annot$SYMBOL[ order(-abs(pca$rotation[,.x])) ]
                 tmodCERNOtest(gl)
@@ -362,8 +364,79 @@ tmodCERNOtest(gl, mset=goset, qval = 1e-3) %>%
   formatRound(c("cES", "AUC"))
 ```
 
+## Upset plots
 
 
+
+```{r}
+#| fig.width=14,
+#| fig.height=8
+tres[[1]] %>% filter(N1 < 20) %>% pull(ID) %>% upset()
+```
+
+
+## Overlaps between gene sets
+
+
+```{r results="markdown"}
+#| fig.width=12,
+#| fig.height=8
+foo <- tres[[1]] %>% 
+  slice(1:20) %>%
+  pull(ID) %>% 
+  modCorPlot(stat = "overlap")
+foo
+```
+
+
+
+
+
+
+
+## "Leading edge" analysis
+
+Which genes are driving the enrichment?
+
+
+```{r}
+evidencePlot(gl, m = "LI.M165", mset=tmod)
+```
+
+```{r}
+evidencePlot(gl, m = "LI.M165", mset=tmod, style="gsea")
+```
+
+
+Get the leading edge:
+
+
+```{r results="markdown"}
+lea <- tmodLEA(gl, "LI.M165")
+lea
+```
+
+
+```{r}
+clr <- ifelse(gl %in% lea[[1]], "red", "grey")
+names(clr) <- gl
+evidencePlot(gl, m = "LI.M165", mset=tmod,
+               gene.labels=TRUE,
+               gene.colors = clr)
+```
+
+And GSEA style:
+
+
+```{r}
+clr <- ifelse(gl %in% lea[[1]], "red", "grey")
+names(clr) <- gl
+evidencePlot(gl, m = "LI.M165", mset=tmod,
+               gene.labels=TRUE,
+               gene.colors = clr,
+               style="gsea")
+abline(v=attr(lea[[1]], "LEA"), col="red", lwd=2)
+```
 
 
 
@@ -428,7 +501,7 @@ ggPanelplot(res, sgenes=sgenes, filter_row_q = 1e-3, filter_row_auc = .85, q_thr
 
 
 
-
+# Bibliography
 
 
 

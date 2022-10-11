@@ -34,6 +34,8 @@ library(qrcode)
 plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
 ```
 
+[january.weiner@bih-charite.de](mailto:january.weiner@bih-charite.de)
+
 ]
 
 .pull-right[
@@ -59,13 +61,21 @@ plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
 .pull-left[
 
 
+```{r}
+plot(qr_code("https://github.com/january3/tmod"))
+```
+
+
+
 ]
 
 
 .pull-right[
 
 
+![logo](figures/logo.png)
 
+[github.com/january3/tmod](https://github.com/january3/tmod)
 
 ]
 
@@ -98,7 +108,13 @@ overview <- read_table("table_zyla.txt")
 knitr::kable(overview)
 ```
 
-----
+.myfootnote[
+
+Zyla J, Marczyk M, Domaszewska T, Kaufmann SH, Polanska J, **Weiner 3rd J.** Gene set enrichment for reproducible science: comparison of CERNO and eight other algorithms. Bioinformatics. 2019 Dec 15;35(24):5146-54.
+]
+
+
+---
 
 .pull-left[
 
@@ -132,6 +148,41 @@ In this cases, I often use PLAGE (also implemented in tmod)
 
 
 ]
+
+---
+
+## Three things more important than the algorithm
+
+--
+
+ * a good model producing the ranked gene list
+   * filtering noise
+   * careful statistical analysis
+
+--
+
+ * carefully selected gene sets 
+
+--
+
+ * detailed inspection of results
+   * look at the NEs / ROC curves ("evidence plots")
+   
+
+
+---
+
+# Tips and tricks
+
+---
+
+## Working with an a priori hypothesis
+
+  * *never* use the current data set to propose your hypothesis! 
+  * use expert knowledge:
+    * literature
+    * experiments
+  * which genes are expected to be transcriptionally regulated
 
 ---
 

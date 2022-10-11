@@ -4,7 +4,7 @@
     <title>Gene set enrichment workshop</title>
     <meta charset="utf-8" />
     <meta name="author" content="January Weiner" />
-    <meta name="date" content="2022-10-10" />
+    <meta name="date" content="2022-10-11" />
     <script src="libs/header-attrs-2.14/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="files/cubi-fonts.css" type="text/css" />
@@ -21,7 +21,7 @@ class: center, middle, inverse, title-slide
 ### January Weiner
 ]
 .date[
-### 2022-10-10
+### 2022-10-11
 ]
 
 ---
@@ -39,6 +39,8 @@ class: center, middle, inverse, title-slide
 
 ![](workshop_intro_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
 
+[january.weiner@bih-charite.de](mailto:january.weiner@bih-charite.de)
+
 ]
 
 .pull-right[
@@ -55,6 +57,34 @@ class: center, middle, inverse, title-slide
  * Your turn + discussion
 
 ]
+
+---
+
+## Gene set enrichments with tmod
+
+
+.pull-left[
+
+
+![](workshop_intro_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+
+
+]
+
+
+.pull-right[
+
+
+![logo](figures/logo.png)
+
+[github.com/january3/tmod](https://github.com/january3/tmod)
+
+]
+
+
+
+
 
 ---
 
@@ -89,7 +119,13 @@ Zyla J, Marczyk M, Domaszewska T, Kaufmann SH, Polanska J, **Weiner 3rd J.** Gen
 |GS              |input   |Built-in    |modules    |or   |user    |input |User  |input      |Built-in |GSs  |
 |Alternative     |ranking |metrics     |Yes        |Yes  |No      |Yes   |N.A.  |Yes        |No       |N.A. |
 
-----
+.myfootnote[
+
+Zyla J, Marczyk M, Domaszewska T, Kaufmann SH, Polanska J, **Weiner 3rd J.** Gene set enrichment for reproducible science: comparison of CERNO and eight other algorithms. Bioinformatics. 2019 Dec 15;35(24):5146-54.
+]
+
+
+---
 
 .pull-left[
 
@@ -123,6 +159,39 @@ In this cases, I often use PLAGE (also implemented in tmod)
 
 
 ]
+
+---
+
+## Three things more important than the algorithm
+
+--
+
+ * a good model producing the ranked gene list
+   * filtering noise
+   * careful statistical analysis
+
+--
+
+ * carefully selected gene sets 
+
+--
+
+ * detailed inspection of results
+
+
+---
+
+# Tips and tricks
+
+---
+
+## Working with an a priori hypothesis
+
+  * *never* use the current data set to propose your hypothesis! 
+  * use expert knowledge:
+    * literature
+    * experiments
+  * which genes are expected to be transcriptionally regulated
 
 ---
 
