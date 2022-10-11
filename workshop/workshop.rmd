@@ -136,7 +136,7 @@ if(!file.exists(ds2_file)) {
 First, take a look at the structure of the data:
 
 
-```{r}
+```{r results="markdown"}
 covar  <- readRDS("data/covar.rds") # covariates
 summary_colorDF(covar)
 ```

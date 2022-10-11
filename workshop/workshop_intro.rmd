@@ -55,6 +55,12 @@ plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
 
 ---
 
+## What are gene set enrichments?
+
+![](figures/gse_overview.png)
+
+---
+
 ## Gene set enrichments with tmod
 
 
