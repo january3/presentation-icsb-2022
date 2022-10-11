@@ -1,5 +1,18 @@
 # ICSB 2022
 
+Dear all,
+
+thank you all for participating in the workshop! Unfortunately, shortly
+afterwards I got the first symptoms of what turned out to be COVID-19.
+Although I was generally wearing a mask, I did not wear one during the the
+workshop. You might want to get tested.
+
+Kind regards,
+
+j.
+
+---
+
 Here you will find the sources for my [poster](poster/),
 [presentation](presentation/) and [workshop](workshop/).
 
