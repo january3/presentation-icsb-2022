@@ -53,6 +53,28 @@ plot(qr_code("https://github.com/january3/presentation-icsb-2022"))
 
 ---
 
+## Gene set enrichments with tmod
+
+
+.pull-left[
+
+
+]
+
+
+.pull-right[
+
+
+
+
+]
+
+
+
+
+
+---
+
 ## What is out there?
 
 
@@ -122,6 +144,39 @@ In this cases, I often use PLAGE (also implemented in tmod)
    * related to rank biserial correlation (effect size for the U-test)
 
 
+---
+
+## Should we test for up- or down-regulated gene sets?
+
+.pull-left[
+
+### Yes 
+
+ * nicely split gene sets into two groups
+ * red and blue dots
+
+However,
+
+ * you can miss gene sets which contain anti-correlated genes
+
+
+
+]
+
+
+.pull-right[
+
+### No
+
+ * many gene sets contain genes that go both up and down
+ * you can always diagnose the gene sets later, checking whether they
+   mostly go up or down
+ * terser visualisation
+ * eigengenes can be used for visualisation as well
+ 
+
+
+]
 
 
 ---

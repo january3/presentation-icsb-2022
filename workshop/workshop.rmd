@@ -1,0 +1,434 @@
+---
+title: "ISCB 2022 Gene set enrichment workshop"
+author: "January Weiner"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: show  
+toc: no
+bibliography: bibliography.bib
+link-citations: true
+---
+
+```{r,echo=FALSE}
+## Set default options for the knitr RMD processing
+knitr::opts_chunk$set(warning=FALSE,message=FALSE,fig.width=5,fig.height=5,cache=TRUE,autodep=TRUE, results="hide")
+```
+
+```{r libraries,cache=FALSE}
+library(tidyverse)
+library(colorDF)
+library(ggplot2)
+library(ggbeeswarm)
+library(tmod)
+library(colorDF)
+library(cowplot)
+theme_set(theme_minimal())
+```
+
+
+# A simple data set
+
+## Basic analysis
+
+This is a data set that I used in my poster. It is available from GEO and
+contains RNA-Seq counts for healthy individuals and COVID-19 patients.
+
+The data set has been already processed and downloaded; however, below you
+will find the code to replicate this procedure.
+
+
+
+
+```{r pheno_data_download,eval=FALSE}
+#| class.source: fold-hide
+## this sometimes fails. The RDS of the object is provided
+Sys.setenv(VROOM_CONNECTION_SIZE=8*131072)
+
+## with getGEO, we can only get the phenoData
+geo <- getGEO("GSE156063")[[1]]
+saveRDS(geo, file="GSE156063.geo")
+```
+
+```{r pheno_data_cleanup,eval=FALSE}
+#| class.source: fold-hide
+geo <- readRDS("GSE156063.geo")
+covar <- as(phenoData(geo), "data.frame")
+
+## remove columns with only one value
+boring <- map_lgl(covar, ~ length(unique(.x)) == 1)
+covar <- covar[ , !boring ] 
+
+## clean up
+covar <- covar %>% 
+  dplyr::rename(gender = "gender:ch1") %>%
+  mutate(disease = gsub(" .*", "", .data[["disease state:ch1"]])) %>%
+  mutate(label = description) %>%
+  mutate(group = disease) %>%
+  arrange(description) %>%
+  dplyr::select(all_of(c("title", "label", "gender", "disease", "group")))
+```
+
+```{r featuredata_download,eval=FALSE}
+#| class.source: fold-hide
+## the counts must be downloaded from GEO separately.
+if(!file.exists("GSE156063_swab_gene_counts.csv.gz")) {
+  download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE156nnn/GSE156063/suppl/GSE156063_swab_gene_counts.csv.gz",
+                "GSE156063_swab_gene_counts.csv.gz")
+}
+
+counts <- read_csv("GSE156063_swab_gene_counts.csv.gz")
+.tmp <- counts[[1]]
+counts <- as.matrix(counts[,-1])
+rownames(counts) <- .tmp
+#counts <- counts[ , covar$description ]
+counts <- counts[ , covar$label ]
+lcpm   <- edgeR::cpm(counts, log=TRUE)
+#stopifnot(all(colnames(counts) == covar$description))
+stopifnot(all(colnames(counts) == covar$label))
+
+annot <- data.frame(ENSEMBL = rownames(counts))
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("ENTREZID"), keytype="ENSEMBL")
+annot$ENTREZID <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("SYMBOL"), keytype="ENSEMBL")
+annot$SYMBOL <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+
+.tmp <- mapIds(org.Hs.eg.db, annot$ENSEMBL, column=c("GENENAME"), keytype="ENSEMBL")
+annot$GENENAME <- .tmp[ match(annot$ENSEMBL, names(.tmp)) ]
+```
+
+
+```{r Preparation_of_the_covariates,cache=FALSE,eval=FALSE}
+#| class.source: fold-hide
+sel <- covar$group %in% c("no", "SC2")
+counts <- counts[ , sel ]
+covar  <- covar[ sel, ]
+covar$group <- as.character(covar$group)
+
+covar$group.disease <- paste0(covar$group, '_', covar$disease)
+rownames(covar) <- covar$label
+saveRDS(covar, file="covar.rds")
+saveRDS(counts, file="counts.rds")
+
+```
+
+```{r DESeq2,cache=FALSE,eval=FALSE}
+#| class.source: fold-hide
+## DESeq2 calculations
+## manual cache, since the operation takes a long time
+sel <- !is.na(covar$group)
+
+ds2 <- DESeqDataSetFromMatrix(counts[,sel], colData=covar[sel, ], design=~ disease)
+
+ds2_file <- "ds2_cached.rds"
+if(!file.exists(ds2_file)) {
+  message("Running DESeq2")
+  ds2 <- DESeq(ds2)
+  saveRDS(ds2, file=ds2_file)
+} else {
+  message("Reading ds2 from manual cache")
+  ds2 <- readRDS(ds2_file)
+}
+```
+
+First, take a look at the structure of the data:
+
+
+```{r}
+covar  <- readRDS("data/covar.rds") # covariates
+summary_colorDF(covar)
+```
+
+
+
+
+
+The results table is stored under "data/disease_SC2_vs_no.tsv". In
+`data/annotation.tsv`, there is the annotation of the genes in this data
+set.
+
+```{r}
+dsres <- read_table("data/disease_SC2_vs_no.tsv")
+annot <- read_table("data/annotation.tsv")
+dsres <- merge(annot, dsres, by="ENSEMBL")
+```
+
+Basic CERNO analysis:
+
+
+```{r basic_tmod,results="markdown"}
+#| fig.width=6,
+#| fig.height=12
+gl <- dsres$SYMBOL[ order(dsres$pvalue) ]
+tres <- tmodCERNOtest(gl)
+print(tres)
+```
+
+Which we can quickly visualize:
+
+
+```{r basic_panelplot}
+#| fig.width=6,
+#| fig.height=12
+ggPanelplot(tres)
+```
+
+We can also add information about whether the genes go up or down. Note
+that we need to put `tres` inside a list, so `ggPanelplot` can match tmod
+results with the `sgenes` object.
+
+
+```{r basic_panelplot2}
+#| fig.width=6,
+#| fig.height=12
+sgenes <- tmodDecideTests(dsres$SYMBOL, lfc = dsres$log2FoldChange,
+                          pval=dsres$pvalue)
+names(sgenes) <- "SC2_vs_no"
+tres <- list("SC2_vs_no"=tres)
+ggPanelplot(tres, sgenes=sgenes)
+```
+
+
+## Using another gene sets
+
+Another built-in gene set are the cell surface markers.
+
+
+```{r cellsignatures}
+#| fig.width=6,
+#| fig.height=12
+data(cell_signatures)
+tres2 <- tmodCERNOtest(gl, mset=cell_signatures)
+
+tres2 <- list("SC2_vs_no"=tres2)
+sgenes2 <- tmodDecideTests(dsres$SYMBOL, lfc = dsres$log2FoldChange,
+                          pval=dsres$pvalue, mset=cell_signatures)
+names(sgenes2) <- "SC2_vs_no"
+ggPanelplot(tres2, sgenes=sgenes2, mset=cell_signatures)
+```
+
+The mset parameter is used in most of the functions to use another gene
+sets.
+
+
+
+
+
+## Inspecting individual enrichments
+
+Let us consider the gene set "LI.M68" – RIG-1 like receptor signalling.
+First, show the genes in this gene set:
+
+
+```{r results="markdown"}
+data(tmod) # make the built-in gene sets visible
+getModuleMembers("LI.M68", mset=tmod)
+```
+
+Evidence plot – a ROC curve:
+
+
+```{r evidence plots}
+#| fig.width=12,
+#| fig.height=12
+g1 <- ggEvidencePlot(gl, m = "DC.M1.2") + ggtitle("AUC 0.99")
+g2 <- ggEvidencePlot(gl, m = "LI.M68") + ggtitle("AUC 0.93")
+g3 <- ggEvidencePlot(gl, m = "LI.M165") + ggtitle("AUC 0.76")
+g4 <- ggEvidencePlot(gl, m = "LI.M4.0") + ggtitle("AUC 0.61")
+plot_grid(g1, g2, g3, g4, nrow=2)
+```
+
+# Eigengenes
+
+
+
+The basic idea is as follos: run PCA only on a selected group of genes, use
+PC1 instead of average gene expression of that gene set (mind the signs!).
+Below, `counts.rds` contains the raw RNA-seq counts, which I first convert
+to log~2~ counts per million.
+
+```{r eigengenes_manual}
+counts <- readRDS("data/counts.rds")
+
+lcpm <- edgeR::cpm(counts, log=TRUE)
+mm <- getModuleMembers("LI.M68", mset=tmod)[[1]]
+sel <- annot$SYMBOL %in% mm
+covar$eig <- prcomp(t(lcpm[ sel, ]), scale.=TRUE)$x[,1]
+```
+
+We can use eigengenes to nicely plot the results:
+
+
+```{r eigengenes}
+ggplot(covar, aes(x=disease, y=eig)) + geom_boxplot(outlier.shape = NA) +
+  geom_beeswarm(cex=3)
+```
+
+(However, mind the sign!)
+
+In tmod, eigengenes can be computed directly. Tmod makes sure that the
+eigengene correlates positively with the majority of the genes in the gene
+set and reverses the sign when necessary:
+
+
+```{r eigengenes4}
+#| fig.width=10,
+#| fig.height=10
+selm <- tres[[1]]$ID[1:4]
+eig <- eigengene(lcpm, annot$SYMBOL)
+eig <- as.data.frame(t(eig)) %>%
+  select(all_of(selm)) %>%
+  rownames_to_column("label") %>% 
+  inner_join(covar, by="label")
+plots <- map(selm, ~ ggplot(eig, aes_string(x="disease", y=.x)) +
+             geom_boxplot(outlier.shape=NA) + 
+             geom_beeswarm(cex=3) +
+             ggtitle(tres[[1]]$Title[ match(.x, tres[[1]]$ID) ]))
+plot_grid(plotlist=plots)
+```
+
+
+
+
+
+# Combining gene set enrichments with PCA
+
+Using a method like tmodCERNOtest, tmodUtest or fsgsea makes it possible to
+apply gene set enrichment to any single ranked list of genes.
+
+(I have selected the components based on correlation with `covar$disease`)
+
+```{r pca1}
+#| fig.width=6,
+#| fig.height=6
+pca <- prcomp(t(lcpm), scale.=TRUE)
+pca_df <- pca$x %>% as.data.frame %>% 
+  rownames_to_column("label") %>% merge(covar)
+ggplot(pca_df, aes(x=PC5, y=PC6, color=disease)) + geom_point()
+```
+
+We can sort all the genes by their decreasing absolute loadings in the pca object.
+
+
+
+```{r}
+pcares <- map(1:10, ~ {
+                gl <- annot$SYMBOL[ order(-abs(pca$rotation[,.x])) ]
+                tmodCERNOtest(gl)
+             })
+names(pcares) <- colnames(pca$rotation)[1:10]
+sgenes <- tmodDecideTests(annot$SYMBOL, 
+                          lfc=pca$rotation[, 1:10],
+                          pval=NULL,
+                          lfc.thr = 0)
+ggPanelplot(pcares, sgenes=sgenes, filter_row_auc = .85)
+```
+
+
+
+
+```{r}
+ggplot(pca_df, aes(x=PC2, y=PC3, color=disease)) + geom_point()
+```
+
+Check the function `tmod_pca` for more details.
+
+
+# Using gene sets from msigdbr
+
+Converting the data frame from the msigdbr package for use with tmod is straightforward:
+
+
+```{r}
+library(msigdbr)
+msig_df <- msigdbr("Homo sapiens")
+
+goset <- msig_df %>%
+  filter(gs_subcat == "GO:BP") %>%
+  makeTmodFromDataFrame(module_col="gs_name",
+                        title_col="gs_name",
+                        feature_col="gene_symbol")
+```
+
+
+```{r results="markdown"}
+library(DT)
+tmodCERNOtest(gl, mset=goset, qval = 1e-3) %>%
+  filter(N1 > 5) %>%
+  datatable() %>%
+  formatSignif(c("adj.P.Val", "P.Value")) %>%
+  formatRound(c("cES", "AUC"))
+```
+
+
+
+
+
+
+
+
+# The vaccination example
+
+
+This example data set has been published by @weiner2019characterization.
+RNA has been collected daily from individuals vaccinated with one of seven
+vaccines over the course of several days. The data set has been collected
+using microarrays. The pre-calculated results include two influenza
+vaccines, one containing an adjuvant and the other not. For details how to
+get this table, see the online tmod manual
+[here](https://january3.github.io/tmod/articles/user_manual/tmod_user_manual.html),
+section "Transcriptional responses to vaccination".
+
+```{r vaccine_read_data}
+tt <- readRDS("data/vaccination_toptable.rds")
+```
+
+The subset contains results for 5 time points for two vaccines (10
+contrasts in total). The two vaccines are denoted with "A" (no adjuvant)
+and "F" (adjuvant). We will run gene set enrichment on each of these time
+points using `tmodCERNOtest`.
+
+
+
+```{r vaccine_tmod}
+contrasts_v <- paste0(rep(c("F", "A"), each=5), "_", 1:5)
+sort_cols <- paste0("qval.", contrasts_v)
+res <- map(sort_cols, ~ {
+  tmodCERNOtest(tt$GENE_SYMBOL[ order(tt[[.x]]) ])
+})
+names(res) <- contrasts_v
+```
+
+The figure below shows the results.
+
+
+```{r vaccine_panelplot0,fig.width=12,fig.height=8}
+ggPanelplot(res, filter_row_q = 1e-3, filter_row_auc = .85, q_thr=0.01)
+```
+
+Do these gene sets contain genes that go up or down? For this, we need to
+determine how many genes in each gene set are significantly going up or
+down.
+
+
+
+```{r vaccine_sgenes}
+pval <- tt %>% select(starts_with("qval"))
+lfc  <- tt %>% select(starts_with("logFC"))
+sgenes <- tmodDecideTests(tt$GENE_SYMBOL, lfc=lfc, pval=pval)
+names(sgenes) <- contrasts_v
+```
+
+```{r vaccine_panelplot,fig.width=12,fig.height=8}
+ggPanelplot(res, sgenes=sgenes, filter_row_q = 1e-3, filter_row_auc = .85, q_thr=0.01)
+```
+
+
+
+
+
+
+
+

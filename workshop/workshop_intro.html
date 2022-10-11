@@ -44,6 +44,8 @@ class: center, middle, inverse, title-slide
 .pull-right[
  
  * A few points to discuss
+   - tmod
+   - effect sizes: ROC curves and AUC
  * A short demo
    - using tmod/CERNO
    - combining with PCA
@@ -83,12 +85,97 @@ Zyla J, Marczyk M, Domaszewska T, Kaufmann SH, Polanska J, **Weiner 3rd J.** Gen
 |Reproducibility |++      |+           |−          |+    |+       |−     |+     |−−         |−        |NA   |
 |Sensitive       |to      |GS          |size       |No   |No      |Yes   |No    |No         |No       |No   |
 |Sensitive       |to      |sample      |size       |No   |No      |Yes!  |No    |No         |No       |No   |
-|Data            |inputa  |Ordered     |gene       |list |Ordered |gene  |list  |Expression |matrix   |+    |
-|GS              |inputa  |Built-in    |modules    |or   |user    |input |User  |input      |Built-in |GSs  |
-|Alternative     |ranking |metricsa    |Yes        |Yes  |No      |Yes   |N.A.  |Yes        |No       |N.A. |
+|Data            |input   |Ordered     |gene       |list |Ordered |gene  |list  |Expression |matrix   |+    |
+|GS              |input   |Built-in    |modules    |or   |user    |input |User  |input      |Built-in |GSs  |
+|Alternative     |ranking |metrics     |Yes        |Yes  |No      |Yes   |N.A.  |Yes        |No       |N.A. |
+
+----
+
+.pull-left[
+
+## Why am I using tmod?
+
+ * CERNO is fast and reproducible
+ * included gene sets are unique and useful
+ * unique visualizations
+ * tidyverse coding style rather than BioConductor coding style
+
+
+]
+
+--
+
+.pull-right[
+
+## When am I not using tmod?
+ 
+ * I am required to use fgsea (using not the most popular package is often
+   a pain in the neck!)
+
+In these cases, I use both CERNO and fgsea and study the differences
+
+ * small gene universe
+   - olink
+   - some metabolic profiling projects
+   - nanostring
+
+In this cases, I often use PLAGE (also implemented in tmod)
+
+
+]
+
+---
+
+## Effect size, AUC and ROC curves
+
+ * good effect size measure does not depend
+   on sample size (although can be correlated with p-value)
+ * AUC (area under curve) has advantages:
+   * easy to interpret and show graphically
+   * related to rank biserial correlation (effect size for the U-test)
+
+
+---
+
+## Should we test for up- or down-regulated gene sets?
+
+.pull-left[
+
+### Yes 
+
+ * nicely split gene sets into two groups
+ * red and blue dots
+
+However,
+
+ * you can miss gene sets which contain anti-correlated genes
 
 
 
+]
+
+
+.pull-right[
+
+### No
+
+ * many gene sets contain genes that go both up and down
+ * you can always diagnose the gene sets later, checking whether they
+   mostly go up or down
+ * terser visualisation
+ * eigengenes can be used for visualisation as well
+ 
+
+
+]
+
+
+---
+
+## Eigengenes
+
+Basically: run a PCA on a gene set, take the first component (mind the
+sign!), use this value as a relative per-sample pathway score
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
